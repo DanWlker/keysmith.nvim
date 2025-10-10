@@ -35,8 +35,10 @@ M.select_all_keys = function()
     },
     ---@param item Keysmith.NodeItem
     function(item)
-      local start_row, start_col = item.target_node:start()
-      vim.api.nvim_win_set_cursor(0, { start_row + 1, start_col })
+      if item then
+        local start_row, start_col = item.target_node:start()
+        vim.api.nvim_win_set_cursor(0, { start_row + 1, start_col })
+      end
     end
   )
 end

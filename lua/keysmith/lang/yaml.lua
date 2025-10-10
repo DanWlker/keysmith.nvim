@@ -37,7 +37,7 @@ M.get_all_leaf_nodes = function()
     --prefixPrint('type ' .. type)
 
     -- Handle object properties
-    if type == 'pair' or type == 'block_mapping_pair' or type == 'flow_mapping_pair' then
+    if type == 'block_mapping_pair' or type == 'flow_pair' then
       local key_node = node:field('key')[1]
       if key_node then
         local key = clean_key(vim.treesitter.get_node_text(key_node, 0))
