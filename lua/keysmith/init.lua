@@ -72,6 +72,8 @@ M.get_value = function()
   -- TODO: Implement
 end
 
+M.supported_languages = (function() return tools.get_files_without_extension './lang' end)()
+
 ---@return boolean
 M.can_parse = function()
   local buf_id = vim.api.nvim_get_current_buf()
@@ -80,7 +82,10 @@ M.can_parse = function()
     return false
   end
 
-  -- TODO: Implement check for if the ft parser is supported
+  if not M.supported_languages[parser:lang()] then
+    return false
+  end
+
   return true
 end
 
