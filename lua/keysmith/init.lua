@@ -1,8 +1,8 @@
-local tools = require 'parsely.tools'
+local tools = require 'keysmith.tools'
 
 local M = {}
 
----@type Parsely.Config
+---@type Keysmith.Config
 M.opts = {
   -- ft_parser = {
   -- 	yaml = "yaml",
@@ -13,9 +13,9 @@ M.opts = {
   -- },
 }
 
----@param opts Parsely.Config
+---@param opts Keysmith.Config
 M.setup = function(opts)
-  ---@type Parsely.Config
+  ---@type Keysmith.Config
   M.opts = vim.tbl_extend('force', M.opts, opts or {})
 end
 
@@ -28,11 +28,11 @@ M.select_all_keys = function()
   vim.ui.select(
     tools.get_all_nodes(),
     {
-      prompt = 'Parsely',
-      ---@param item Parsely.NodeItem
+      prompt = 'Keysmith',
+      ---@param item Keysmith.NodeItem
       format_item = function(item) return item.key end,
     },
-    ---@param item Parsely.NodeItem
+    ---@param item Keysmith.NodeItem
     function(item)
       local start_row, start_col = item.node:start()
       vim.api.nvim_win_set_cursor(0, { start_row, start_col })
@@ -48,7 +48,7 @@ M.get_all_keys = function()
   end
 
   return vim.tbl_map(
-    ---@param item Parsely.NodeItem
+    ---@param item Keysmith.NodeItem
     function(item) return item.key end,
     tools.get_all_nodes()
   )

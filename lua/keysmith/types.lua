@@ -1,6 +1,6 @@
----@class Parsely.Config
+---@class Keysmith.Config
 
----@class Parsely.NodeItem
+---@class Keysmith.NodeItem
 ---@field key string
 ---@field value string
 ---@field node TSNode

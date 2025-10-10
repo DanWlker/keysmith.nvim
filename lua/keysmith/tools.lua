@@ -2,7 +2,7 @@ local M = {}
 
 -- Credit to Mini.nvim
 ---@param msg string
-M.error = function(msg) error('(parsely) ' .. msg, 0) end
+M.error = function(msg) error('(keysmith) ' .. msg, 0) end
 
 -- Credit to Mini.nvim
 ---@param msg string
@@ -14,7 +14,7 @@ M.error_treesitter = function(msg)
   M.error(msg)
 end
 
----@return Parsely.NodeItem
+---@return Keysmith.NodeItem
 M.get_all_nodes = function()
   -- TODO: Implement
 end
