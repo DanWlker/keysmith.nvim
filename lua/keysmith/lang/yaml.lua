@@ -84,15 +84,11 @@ M.get_all_leaf_nodes = function()
   ---@param node TSNode
   ---@param current_path string
   ---@return string
-  local function traverse_node(node, current_path)
+  local function traverse_node(node, current_path, depth)
     local type = node:type()
+    local prefixPrint = function(text) print(string.rep(' ', depth) .. text) end
 
-    if type == 'stream' or type == 'document' or type == 'block_node' then
-      for child in node:iter_children() do
-        traverse_node(child, current_path)
-      end
-      return ''
-    end
+    prefixPrint('type ' .. type)
 
     -- Handle object properties
     if type == 'pair' or type == 'block_mapping_pair' or type == 'flow_mapping_pair' then
@@ -104,50 +100,52 @@ M.get_all_leaf_nodes = function()
         -- Traverse value node
         local value_node = node:field('value')[1]
         if value_node then
-          local leaf_key = traverse_node(value_node, new_path)
+          prefixPrint('traversing ' .. new_path)
+          local leaf_key = traverse_node(value_node, new_path, depth + 1)
+          prefixPrint('=======2 ' .. type)
+          prefixPrint('p: ' .. new_path)
+          prefixPrint(leaf_key)
           if leaf_key ~= '' then
-            table.insert(paths, new_path .. leaf_key)
+            table.insert(paths, new_path .. '.' .. leaf_key)
             return ''
           end
+          return key
         end
-
-        return key
       end
     -- Handle array items
-    elseif type == 'block_sequence_item' or type == 'flow_sequence_item' then
-      local parent = node:parent()
-      if parent then
-        local index = 0
-        for child in parent:iter_children() do
-          if child == node then
-            break
-          end
-          if child:type() == type then
-            index = index + 1
-          end
-        end
+    elseif type == 'block_sequence' or type == 'flow_sequence' then
+      local index = 0
+      for child in node:iter_children() do
         local new_path = current_path .. '[' .. index .. ']'
+        index = index + 1
 
-        -- Traverse array item content
-        for child in node:iter_children() do
-          local leaf_key = traverse_node(child, new_path)
-
-          if leaf_key ~= '' then
-            table.insert(paths, new_path .. leaf_key)
-          end
+        prefixPrint('traversing ' .. new_path)
+        local leaf_key = traverse_node(child, new_path, depth + 1)
+        prefixPrint('=======3 ' .. type)
+        prefixPrint('p: ' .. new_path)
+        prefixPrint(leaf_key)
+        if leaf_key ~= '' then
+          table.insert(paths, new_path .. '.' .. leaf_key)
         end
       end
-    -- Handle block mappings and sequences
-    elseif type == 'block_mapping' or type == 'flow_mapping' or type == 'block_sequence' or type == 'flow_sequence' then
+    -- Handle other stuff
+    else
       for child in node:iter_children() do
-        traverse_node(child, current_path)
+        prefixPrint('traversing ' .. current_path)
+        local leaf_key = traverse_node(child, current_path, depth + 1)
+        prefixPrint('=======4 ' .. type)
+        prefixPrint('p: ' .. current_path)
+        prefixPrint(leaf_key)
+        if leaf_key ~= '' then
+          table.insert(paths, current_path .. '.' .. leaf_key)
+        end
       end
     end
-
     return ''
   end
 
-  traverse_node(root, '')
+  traverse_node(root, '', 0)
+  print(vim.inspect(paths))
   return paths
 end
 

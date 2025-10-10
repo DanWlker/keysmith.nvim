@@ -78,21 +78,20 @@ M.get_value = function()
   return tools.get_node(parser_name).value
 end
 
-M.supported_languages = (function() return tools.get_files_without_extension './lang' end)()
-
 ---@return string, boolean
 M.can_parse = function()
   local buf_id = vim.api.nvim_get_current_buf()
-  local has_parser, parser = pcall(vim.treesitter.get_parser, buf_id, nil, { error = false })
-  if not has_parser or parser == nil then
+  local has_ts_parser, ts_parser = pcall(vim.treesitter.get_parser, buf_id, nil, { error = false })
+  if not has_ts_parser or ts_parser == nil then
     return '', false
   end
 
-  if not M.supported_languages[parser:lang()] then
+  local has_parser = pcall(require, 'keysmith.lang.' .. ts_parser:lang())
+  if not has_parser then
     return '', false
   end
 
-  return parser:lang(), true
+  return ts_parser:lang(), true
 end
 
 return M
