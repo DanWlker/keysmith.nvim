@@ -20,13 +20,14 @@ M.setup = function(opts)
 end
 
 M.select_all_keys = function()
-  if not M.can_parse() then
+  local parser_name, ok = M.can_parse()
+  if not ok then
     tools.error_treesitter 'parser'
     return
   end
 
   vim.ui.select(
-    tools.get_all_nodes(),
+    tools.get_all_leaf_nodes(parser_name),
     {
       prompt = 'Keysmith',
       ---@param item Keysmith.NodeItem
@@ -34,60 +35,64 @@ M.select_all_keys = function()
     },
     ---@param item Keysmith.NodeItem
     function(item)
-      local start_row, start_col = item.node:start()
+      local start_row, start_col = item.target_node:start()
       vim.api.nvim_win_set_cursor(0, { start_row, start_col })
     end
   )
 end
 
 ---@return string[]
-M.get_all_keys = function()
-  if not M.can_parse() then
+M.get_all_leaf_keys = function()
+  local parser_name, ok = M.can_parse()
+  if not ok then
     tools.error_treesitter 'parser'
-    return
+    return {}
   end
 
   return vim.tbl_map(
     ---@param item Keysmith.NodeItem
     function(item) return item.key end,
-    tools.get_all_nodes()
+    tools.get_all_leaf_nodes(parser_name)
   )
 end
 
+---@return string
 M.get_key = function()
-  if not M.can_parse() then
+  local parser_name, ok = M.can_parse()
+  if not ok then
     tools.error_treesitter 'parser'
-    return
+    return ''
   end
 
-  -- TODO: Implement
+  return tools.get_node(parser_name).key
 end
 
--- TODO: Check if this is really needed, seems weird abit
+---@return string
 M.get_value = function()
-  if not M.can_parse() then
+  local parser_name, ok = M.can_parse()
+  if not ok then
     tools.error_treesitter 'parser'
-    return
+    return ''
   end
 
-  -- TODO: Implement
+  return tools.get_node(parser_name).value
 end
 
 M.supported_languages = (function() return tools.get_files_without_extension './lang' end)()
 
----@return boolean
+---@return string, boolean
 M.can_parse = function()
   local buf_id = vim.api.nvim_get_current_buf()
   local has_parser, parser = pcall(vim.treesitter.get_parser, buf_id, nil, { error = false })
   if not has_parser or parser == nil then
-    return false
+    return '', false
   end
 
   if not M.supported_languages[parser:lang()] then
-    return false
+    return '', false
   end
 
-  return true
+  return parser:lang(), true
 end
 
 return M
