@@ -63,6 +63,7 @@ M.get_key = function()
   -- TODO: Implement
 end
 
+-- TODO: Check if this is really needed, seems weird abit
 M.get_value = function()
   if not M.can_parse() then
     tools.error_treesitter 'parser'

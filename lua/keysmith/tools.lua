@@ -24,6 +24,7 @@ M.get_files_without_extension = function(dir)
   local names = {}
 
   local fs = vim.uv.fs_scandir(dir)
+  -- TODO: check this failing silently
   if not fs then
     return names
   end
