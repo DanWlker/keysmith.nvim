@@ -1,6 +1,8 @@
 ---@type Keysmith.lang
 local M = {}
 
+-- TODO: check if want to support all possible combinations of keys and values
+--
 ---@return Keysmith.NodeItem[]
 M.get_all_leaf_nodes = function()
   local ft = vim.bo.filetype

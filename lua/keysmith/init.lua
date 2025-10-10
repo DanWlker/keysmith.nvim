@@ -19,6 +19,7 @@ M.setup = function(opts)
   M.opts = vim.tbl_extend('force', M.opts, opts or {})
 end
 
+-- TODO: support custom actions for function(item) so that users can maybe copy the value to their clipboard
 M.select_all_keys = function()
   local parser_name, ok = M.can_parse()
   if not ok then
@@ -26,6 +27,7 @@ M.select_all_keys = function()
     return
   end
 
+  -- TODO: Support quickfix list
   vim.ui.select(
     tools.get_all_leaf_nodes(parser_name),
     {
