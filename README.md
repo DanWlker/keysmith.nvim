@@ -2,7 +2,7 @@
 
 A neovim helper for data/config languages like Json, Yaml, Toml etc.
 
-https://github.com/DanWlker/keysmith.nvim/blob/main/demo.mov
+<video src="./demo.mov" width="320" height="240" controls></video>
 
 ## Installation
 
