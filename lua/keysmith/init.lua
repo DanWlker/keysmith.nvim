@@ -68,7 +68,7 @@ M.get_key = function()
     return ''
   end
 
-  local node = tools.get_keysmith_node(parser_name)
+  local node = tools.get_leaf_keysmith_node(parser_name)
   if not node then
     return ''
   end
@@ -84,7 +84,7 @@ M.get_value = function()
     return ''
   end
 
-  local node = tools.get_keysmith_node(parser_name)
+  local node = tools.get_leaf_keysmith_node(parser_name)
   if not node then
     return ''
   end

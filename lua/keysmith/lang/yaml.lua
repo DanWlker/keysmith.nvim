@@ -5,24 +5,7 @@ local M = {}
 local function clean_key(key) return key:gsub('^["\']', ''):gsub('["\']$', '') end
 
 -- TODO: check if want to support all possible combinations of keys and values, not just leaves
--- TODO: change this to accept buf number or a root node to get all the child key value nodes
-M.get_all_leaf_keysmith_nodes = function(buf_id)
-  local ok_parser, parser = pcall(vim.treesitter.get_parser, buf_id or 0)
-  if not ok_parser or not parser then
-    return nil
-  end
-
-  local trees = parser:parse()
-  if not trees or not trees[1] then
-    return nil
-  end
-
-  local tree = trees[1]
-  local root = tree:root()
-  if not root then
-    return nil
-  end
-
+M.get_all_leaf_keysmith_nodes = function(root)
   ---@type table<boolean, Keysmith.NodeItem>
   local paths = {}
 
@@ -96,7 +79,7 @@ M.get_all_leaf_keysmith_nodes = function(buf_id)
   return res
 end
 
-M.get_keysmith_node = function(opts)
+M.get_leaf_keysmith_node = function(opts)
   vim.treesitter.get_parser():parse()
   local node = vim.treesitter.get_node(opts)
   if not node then
