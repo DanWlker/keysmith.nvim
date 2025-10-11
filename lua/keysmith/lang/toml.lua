@@ -8,6 +8,7 @@ local function clean_key(key) return key:gsub('^["\']', ''):gsub('["\']$', '') e
 M.get_all_leaf_keysmith_nodes = function(root, bufnr)
   ---@type table<boolean, Keysmith.NodeItem>
   local paths = {}
+  local arrayIndexCounter = {}
 
   ---@param node TSNode
   ---@param current_path string
@@ -15,36 +16,48 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
   ---@param depth number
   local function traverse_node(node, current_path, current_path_target_node, depth)
     local type = node:type()
-    local prefixPrint = function(text) print(string.rep(' ', depth) .. text) end
+    --local prefixPrint = function(text) print(string.rep(' ', depth) .. text) end
 
     --prefixPrint('type ' .. type)
-    --prefixPrint('current_path_target_node ' ..vim.treesitter.get_node_text(current_path_target_node, bufnr) )
 
     -- Handle object properties
     if type == 'pair' then
-      local key_node = node:field('key')[1]
+      local key_node = node:field('bare_key')[1]
       if key_node then
         local key = clean_key(vim.treesitter.get_node_text(key_node, 0))
         local new_path = current_path .. '.' .. key
 
+        local value_node = key_node:next_sibling()
+        if not value_node then
+          return
+        end
+
         -- Traverse value node
-        local value_node = node:field('value')[1]
-        if value_node then
+        if value_node:type() == 'inline_table' then
           --prefixPrint('traversing ' .. new_path)
           traverse_node(value_node, new_path, key_node, depth + 1)
           --prefixPrint('=======2 ' .. type)
           --prefixPrint('p: ' .. new_path)
           return
         end
+
+        local start_line, start_col = key_node:start()
+        paths[new_path] = {
+          key = new_path,
+          target_node = key_node,
+
+          buf = bufnr,
+          pos = { start_line + 1, start_col },
+          text = new_path,
+          valid = true,
+        }
+        return
       end
+
     -- Handle array items
-    elseif type == 'array' then
+    elseif type == 'table_array_element' then
       local index = 0
       for child in node:iter_children() do
-        if child:type() ~= 'object' then
-          goto continue
-        end
-
         local new_path = current_path .. '[' .. index .. ']'
         index = index + 1
 
@@ -52,7 +65,6 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
         traverse_node(child, new_path, child, depth + 1)
         --prefixPrint('=======3 ' .. type)
         --prefixPrint('p: ' .. new_path)
-          ::continue::
       end
     -- Handle other stuff
     else
@@ -103,7 +115,7 @@ M.get_keysmith_node = function(opts)
   while node do
     local type = node:type()
 
-    if type == 'pair' then
+    if type == 'block_mapping_pair' or type == 'flow_pair' then
       local key_node = node:field('key')[1]
       if key_node then
         local node_text = clean_key(vim.treesitter.get_node_text(key_node, 0))
@@ -128,15 +140,11 @@ M.get_keysmith_node = function(opts)
 
         last_key_node = node
       end
-    elseif type == 'array' then
-      local counter = 0
+    elseif type == 'block_sequence' or type == 'flow_sequence' then
+      local counter = 1
       for child in node:iter_children() do
         if child:equal(last_key_node) then
           break
-        end
-
-        if child:type() ~= 'object' then
-          goto continue
         end
 
         local desc = child:child_with_descendant(last_key_node)
@@ -144,7 +152,6 @@ M.get_keysmith_node = function(opts)
           break
         end
         counter = counter + 1
-          ::continue::
       end
 
       local node_text = '[' .. counter .. ']'
