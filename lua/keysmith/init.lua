@@ -16,7 +16,7 @@ end
 M.select_all_keys = function(opts, on_choice)
   local parser_name, ok = M.can_parse()
   if not ok then
-    tools.error_treesitter 'parser'
+    -- tools.error_treesitter 'parser'
     return
   end
 
@@ -44,7 +44,7 @@ end
 M.get_all_leaf_keys = function()
   local parser_name, ok = M.can_parse()
   if not ok then
-    tools.error_treesitter 'parser'
+    -- tools.error_treesitter 'parser'
     return {}
   end
 
@@ -59,7 +59,7 @@ end
 M.get_key = function()
   local parser_name, ok = M.can_parse()
   if not ok then
-    tools.error_treesitter 'parser'
+    -- tools.error_treesitter 'parser'
     return ''
   end
 
@@ -75,7 +75,7 @@ end
 M.get_value = function()
   local parser_name, ok = M.can_parse()
   if not ok then
-    tools.error_treesitter 'parser'
+    -- tools.error_treesitter 'parser'
     return ''
   end
 
