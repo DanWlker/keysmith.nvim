@@ -16,15 +16,52 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
   ---@param depth number
   local function traverse_node(node, current_path, current_path_target_node, depth)
     local type = node:type()
-    --local prefixPrint = function(text) print(string.rep(' ', depth) .. text) end
+    local prefixPrint = function(text) print(string.rep(' ', depth) .. text) end
 
-    --prefixPrint('type ' .. type)
+    prefixPrint('type ' .. type)
+
+    ---@param curr_node TSNode
+    local function extract_key_node(curr_node)
+      local fields = { bare_key = true, quoted_key = true, dotted_key = true }
+      for child in curr_node:iter_children() do
+        if fields[child:type()] then
+          return child
+        end
+      end
+      return nil
+    end
+
+    ---@param key_node TSNode
+    local function extract_key_text(key_node)
+      if key_node:type() ~= 'dotted_key' then
+        return clean_key(vim.treesitter.get_node_text(key_node, 0))
+      end
+
+      local full_key = ''
+      for sub_key in key_node:iter_children() do
+        local extracted_sub_key = extract_key_text(sub_key)
+        if extracted_sub_key == '.' then
+          goto continue
+        end
+
+        if full_key == '' then
+          full_key = extract_key_text(sub_key)
+        else
+          full_key = full_key .. '.' .. extract_key_text(sub_key)
+        end
+        ::continue::
+      end
+
+      return full_key
+    end
 
     -- Handle object properties
     if type == 'pair' then
-      local key_node = node:field('bare_key')[1] or node:field('quoted_key')[1]
+      local key_node = extract_key_node(node)
+      print(key_node)
       if key_node then
-        local key = clean_key(vim.treesitter.get_node_text(key_node, 0))
+        local key = extract_key_text(key_node)
+        prefixPrint('k: ' .. key)
 
         local new_path
         if current_path == '' then
@@ -40,10 +77,10 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
 
         -- Traverse value node
         if value_node:type() == 'inline_table' then
-          --prefixPrint('traversing ' .. new_path)
+          prefixPrint('traversing ' .. new_path)
           traverse_node(value_node, new_path, key_node, depth + 1)
-          --prefixPrint('=======2 ' .. type)
-          --prefixPrint('p: ' .. new_path)
+          prefixPrint('=======2 ' .. type)
+          prefixPrint('p: ' .. new_path)
           return
         end
 
@@ -62,9 +99,11 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
 
     -- Handle array items
     elseif type == 'table_array_element' then
-      local key_node = node:field('bare_key')[1] or node:field('quoted_key')[1]
+      local key_node = extract_key_node(node)
+      print(key_node)
       if key_node then
-        local key = clean_key(vim.treesitter.get_node_text(key_node, 0))
+        local key = extract_key_text(key_node)
+        prefixPrint('k: ' .. key)
 
         local new_path
         if current_path == '' then
@@ -82,18 +121,20 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
           end
 
           local array_path = current_path .. '[' .. index .. ']'
-          --prefixPrint('traversing ' .. new_path)
+          prefixPrint('traversing ' .. new_path)
           traverse_node(child, array_path, child, depth + 1)
-          --prefixPrint('=======3 ' .. type)
-          --prefixPrint('p: ' .. new_path)
+          prefixPrint('=======3 ' .. type)
+          prefixPrint('p: ' .. new_path)
           ::continue::
         end
       end
     -- Handle other stuff
     elseif type == 'table' then
-      local key_node = node:field 'dotted_key'
+      local key_node = extract_key_node(node)
+      print(key_node)
       if key_node then
-        local key = clean_key(vim.treesitter.get_node_text(key_node, 0))
+        local key = extract_key_text(key_node)
+        prefixPrint('k: ' .. key)
 
         local new_path
         if current_path == '' then
@@ -110,6 +151,15 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
           traverse_node(child, new_path, child, depth + 1)
 
           ::continue::
+        end
+      end
+    else
+      if node:child_count() ~= 0 then
+        for child in node:iter_children() do
+          --prefixPrint('traversing ' .. current_path)
+          traverse_node(child, current_path, current_path_target_node, depth + 1)
+          --prefixPrint('=======4 ' .. type)
+          --prefixPrint('p: ' .. current_path)
         end
       end
     end
