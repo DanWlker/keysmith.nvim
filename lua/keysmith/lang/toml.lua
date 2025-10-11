@@ -48,11 +48,10 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
 
   ---@param node TSNode
   ---@param current_path string
-  ---@param current_path_target_node TSNode
   ---@param depth number
-  local function traverse_node(node, current_path, current_path_target_node, depth)
+  local function traverse_node(node, current_path, depth)
     local type = node:type()
-    local prefixPrint = function(text) print(string.rep(' ', depth) .. text) end
+    -- local prefixPrint = function(text) print(string.rep(' ', depth) .. text) end
 
     --prefixPrint('type ' .. type)
 
@@ -82,12 +81,13 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
         -- Traverse value node
         if value_node:type() == 'inline_table' then
           --prefixPrint('traversing ' .. new_path)
-          traverse_node(value_node, new_path, key_node, depth + 1)
+          traverse_node(value_node, new_path, depth + 1)
           --prefixPrint('=======2 ' .. type)
           --prefixPrint('p: ' .. new_path)
           return
         end
 
+        -- if the type of the value node is not a table, then it can only be the leaf
         local start_line, start_col = key_node:start()
         paths[new_path] = {
           key = new_path,
@@ -126,7 +126,7 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
 
           local array_path = new_path .. '[' .. index .. ']'
           --prefixPrint('traversing ' .. new_path)
-          traverse_node(child, array_path, child, depth + 1)
+          traverse_node(child, array_path, depth + 1)
           --prefixPrint('=======3 ' .. type)
           --prefixPrint('p: ' .. new_path)
           ::continue::
@@ -151,7 +151,7 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
             goto continue
           end
 
-          traverse_node(child, new_path, child, depth + 1)
+          traverse_node(child, new_path, depth + 1)
 
           ::continue::
         end
@@ -160,7 +160,7 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
       if node:child_count() ~= 0 then
         for child in node:iter_children() do
           --prefixPrint('traversing ' .. current_path)
-          traverse_node(child, current_path, current_path_target_node, depth + 1)
+          traverse_node(child, current_path, depth + 1)
           --prefixPrint('=======4 ' .. type)
           --prefixPrint('p: ' .. current_path)
         end
@@ -168,7 +168,7 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
     end
   end
 
-  traverse_node(root, '', root, 0)
+  traverse_node(root, '', 0)
 
   ---@type Keysmith.NodeItem[]
   local res = {}
