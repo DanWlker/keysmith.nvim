@@ -19,30 +19,33 @@ M.setup = function(opts)
   M.opts = vim.tbl_extend('force', M.opts, opts or {})
 end
 
--- TODO: support custom actions for function(item) so that users can maybe copy the value to their clipboard
-M.select_all_keys = function()
+---@param opts table|nil
+---@param on_choice fun(item: Keysmith.NodeItem|nil, idx: integer|nil)|nil
+M.select_all_keys = function(opts, on_choice)
   local parser_name, ok = M.can_parse()
   if not ok then
     tools.error_treesitter 'parser'
     return
   end
 
-  -- TODO: Support quickfix list
-  vim.ui.select(
-    tools.get_all_leaf_keysmith_nodes(parser_name) or {},
-    {
-      prompt = 'Keysmith',
-      ---@param item Keysmith.NodeItem
-      format_item = function(item) return item.key end,
-    },
+  if not on_choice then
     ---@param item Keysmith.NodeItem
-    function(item)
+    on_choice = function(item)
       if item then
         local start_row, start_col = item.target_node:start()
         vim.api.nvim_win_set_cursor(0, { start_row + 1, start_col })
       end
     end
-  )
+  end
+
+  opts = vim.tbl_extend('force', {
+    prompt = 'Keysmith',
+    ---@param item Keysmith.NodeItem
+    format_item = function(item) return item.key end,
+  }, opts or {})
+
+  -- TODO: Support quickfix list
+  vim.ui.select(tools.get_all_leaf_keysmith_nodes(parser_name) or {}, opts, on_choice)
 end
 
 ---@return string[]
@@ -68,7 +71,7 @@ M.get_key = function()
     return ''
   end
 
-  local node = tools.get_leaf_keysmith_node(parser_name)
+  local node = tools.get_keysmith_node(parser_name)
   if not node then
     return ''
   end
@@ -84,7 +87,7 @@ M.get_value = function()
     return ''
   end
 
-  local node = tools.get_leaf_keysmith_node(parser_name)
+  local node = tools.get_keysmith_node(parser_name)
   if not node then
     return ''
   end

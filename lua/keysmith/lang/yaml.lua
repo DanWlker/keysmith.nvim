@@ -79,7 +79,7 @@ M.get_all_leaf_keysmith_nodes = function(root)
   return res
 end
 
-M.get_leaf_keysmith_node = function(opts)
+M.get_keysmith_node = function(opts)
   vim.treesitter.get_parser():parse()
   local node = vim.treesitter.get_node(opts)
   if not node then

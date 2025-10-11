@@ -38,6 +38,6 @@ end
 
 ---@param using_parser string
 ---@return Keysmith.NodeItem | nil
-M.get_leaf_keysmith_node = function(using_parser) return require('keysmith.lang.' .. using_parser).get_leaf_keysmith_node() end
+M.get_keysmith_node = function(using_parser) return require('keysmith.lang.' .. using_parser).get_keysmith_node() end
 
 return M
