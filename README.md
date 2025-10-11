@@ -23,7 +23,7 @@ return {
 
 ```lua
 vim.api.nvim_create_autocmd('BufWinEnter', {
-  pattern = { '*.yaml', '*.yml', '*.json' },
+  pattern = { '*.yaml', '*.yml', '*.json', '*.toml' },
   group = vim.api.nvim_create_augroup('danwlker/keysmith', { clear = true }),
   callback = function() vim.keymap.set('n', '<leader>f/', require('keysmith').select_all_keys) end,
 })

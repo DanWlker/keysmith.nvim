@@ -15,7 +15,7 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
   ---@param depth number
   local function traverse_node(node, current_path, current_path_target_node, depth)
     local type = node:type()
-    local prefixPrint = function(text) print(string.rep(' ', depth) .. text) end
+    -- local prefixPrint = function(text) print(string.rep(' ', depth) .. text) end
 
     --prefixPrint('type ' .. type)
     --prefixPrint('current_path_target_node ' ..vim.treesitter.get_node_text(current_path_target_node, bufnr) )
