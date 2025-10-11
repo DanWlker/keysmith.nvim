@@ -16,34 +16,10 @@ end
 
 ---@param using_parser string
 ---@return Keysmith.NodeItem[] | nil
-M.get_all_leaf_nodes = function(using_parser) return require('keysmith.lang.' .. using_parser).get_all_leaf_nodes() end
+M.get_all_leaf_keysmith_nodes = function(using_parser) return require('keysmith.lang.' .. using_parser).get_all_leaf_keysmith_nodes() end
 
 ---@param using_parser string
 ---@return Keysmith.NodeItem | nil
-M.get_node = function(using_parser) return require('keysmith.lang.' .. using_parser).get_node() end
-
----@return table<string, boolean>
-M.get_files_without_extension = function(dir)
-  local names = {}
-
-  local fs = vim.uv.fs_scandir(dir)
-  if not fs then
-    return names
-  end
-
-  while true do
-    local name, type = vim.uv.fs_scandir_next(fs)
-    if not name then
-      break
-    end
-    if type == 'file' then
-      local base = name:match '(.+)%..+$' or name -- strip extension
-      -- table.insert(names, base)
-      names[base] = true
-    end
-  end
-
-  return names
-end
+M.get_keysmith_node = function(using_parser) return require('keysmith.lang.' .. using_parser).get_keysmith_node() end
 
 return M

@@ -6,5 +6,5 @@
 ---@field target_node TSNode -- To be used when jumping
 
 ---@class Keysmith.lang
----@field get_all_leaf_nodes fun(): Keysmith.NodeItem[] | nil
----@field get_node fun(): Keysmith.NodeItem[] | nil
+---@field get_all_leaf_keysmith_nodes fun(buf_id: number|nil): Keysmith.NodeItem[] | nil
+---@field get_keysmith_node fun(opts: vim.treesitter.get_node.Opts|nil): Keysmith.NodeItem[] | nil

@@ -29,7 +29,7 @@ M.select_all_keys = function()
 
   -- TODO: Support quickfix list
   vim.ui.select(
-    tools.get_all_leaf_nodes(parser_name) or {},
+    tools.get_all_leaf_keysmith_nodes(parser_name) or {},
     {
       prompt = 'Keysmith',
       ---@param item Keysmith.NodeItem
@@ -56,7 +56,7 @@ M.get_all_leaf_keys = function()
   return vim.tbl_map(
     ---@param item Keysmith.NodeItem
     function(item) return item.key end,
-    tools.get_all_leaf_nodes(parser_name) or {}
+    tools.get_all_leaf_keysmith_nodes(parser_name) or {}
   )
 end
 
@@ -68,7 +68,7 @@ M.get_key = function()
     return ''
   end
 
-  local node = tools.get_node(parser_name)
+  local node = tools.get_keysmith_node(parser_name)
   if not node then
     return ''
   end
@@ -84,7 +84,12 @@ M.get_value = function()
     return ''
   end
 
-  return tools.get_node(parser_name).value
+  local node = tools.get_keysmith_node(parser_name)
+  if not node then
+    return ''
+  end
+
+  return node.value
 end
 
 ---@return string, boolean
@@ -99,12 +104,13 @@ M.can_parse = function()
     return '', false
   end
 
-  local has_parser = pcall(require, 'keysmith.lang.' .. ts_parser:lang())
+  local lang = ts_parser:lang()
+  local has_parser = pcall(require, 'keysmith.lang.' .. lang)
   if not has_parser then
     return '', false
   end
 
-  return ts_parser:lang(), true
+  return lang, true
 end
 
 return M
