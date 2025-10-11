@@ -179,6 +179,50 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
   return res
 end
 
-M.get_keysmith_node = function(opts) end
+-- TODO: I don't like this implementation, must find a more efficient way to do it
+-- The arrays are a headache though
+M.get_keysmith_node = function(opts)
+  opts = opts or {}
+
+  local ok_parser, parser = pcall(vim.treesitter.get_parser, opts.bufnr)
+  if not ok_parser or not parser then
+    return nil
+  end
+
+  local trees = parser:parse()
+  if not trees or not trees[1] then
+    return nil
+  end
+
+  local tree = trees[1]
+  local root = tree:root()
+  if not root then
+    return nil
+  end
+
+  local all_nodes = M.get_all_leaf_keysmith_nodes(root, opts.bufnr)
+  if not all_nodes or #all_nodes == 0 then
+    return nil
+  end
+
+  table.sort(all_nodes, function(a, b) return a.pos[1] < b.pos[1] end)
+
+  local cursor_line = (opts.pos or {})[1] or vim.api.nvim_win_get_cursor(0)[1]
+  local previous_node = nil
+  for _, node in pairs(all_nodes) do
+    local node_line, _ = node.target_node:start()
+    node_line = node_line + 1
+
+    if cursor_line == node_line then
+      return node
+    end
+
+    if cursor_line < node_line then
+      return previous_node
+    end
+
+    previous_node = node
+  end
+end
 
 return M
