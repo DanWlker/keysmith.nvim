@@ -2,7 +2,7 @@
 
 A neovim helper for data/config languages like Json, Yaml, Toml etc.
 
-<video src="demo.mov" width="320" height="240" controls></video>
+https://github.com/user-attachments/assets/9e4d011c-50b3-45b8-b261-9befeb84d155
 
 ## Installation
 
