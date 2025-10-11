@@ -97,8 +97,8 @@ end
 
 ---@return string, boolean
 M.can_parse = function()
-  local buf_id = vim.api.nvim_get_current_buf()
-  local has_ts_parser, ts_parser = pcall(vim.treesitter.get_parser, buf_id, nil, { error = false })
+  local bufnr = vim.api.nvim_get_current_buf()
+  local has_ts_parser, ts_parser = pcall(vim.treesitter.get_parser, bufnr, nil, { error = false })
   if not has_ts_parser or ts_parser == nil then
     return '', false
   end

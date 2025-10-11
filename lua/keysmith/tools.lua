@@ -7,10 +7,10 @@ M.error = function(msg) error('(keysmith) ' .. msg, 0) end
 -- Credit to mini.nvim
 ---@param msg string
 M.error_treesitter = function(msg)
-  local buf_id, ft = vim.api.nvim_get_current_buf(), vim.bo.filetype
+  local bufnr, ft = vim.api.nvim_get_current_buf(), vim.bo.filetype
   local has_lang, lang = pcall(vim.treesitter.language.get_lang, ft)
   lang = has_lang and lang or ft
-  msg = string.format('Can not get %s for buffer %d and language "%s".', msg, buf_id, lang)
+  msg = string.format('Can not get %s for buffer %d and language "%s".', msg, bufnr, lang)
   M.error(msg)
 end
 
@@ -33,7 +33,7 @@ M.get_all_leaf_keysmith_nodes = function(using_parser)
     return nil
   end
 
-  return require('keysmith.lang.' .. using_parser).get_all_leaf_keysmith_nodes(root)
+  return require('keysmith.lang.' .. using_parser).get_all_leaf_keysmith_nodes(root, vim.api.nvim_get_current_buf())
 end
 
 ---@param using_parser string

@@ -5,7 +5,7 @@ local M = {}
 local function clean_key(key) return key:gsub('^["\']', ''):gsub('["\']$', '') end
 
 -- TODO: check if want to support all possible combinations of keys and values, not just leaves
-M.get_all_leaf_keysmith_nodes = function(root)
+M.get_all_leaf_keysmith_nodes = function(root, bufnr)
   ---@type table<boolean, Keysmith.NodeItem>
   local paths = {}
 
@@ -52,9 +52,15 @@ M.get_all_leaf_keysmith_nodes = function(root)
     else
       -- leaf node
       if node:child_count() == 0 then
+        local start_line, start_col = current_path_target_node:start()
         paths[current_path] = {
           key = current_path,
           target_node = current_path_target_node,
+
+          buf = bufnr,
+          pos = { start_line + 1, start_col },
+          text = current_path,
+          valid = true,
         }
         return
       end
@@ -145,11 +151,18 @@ M.get_keysmith_node = function(opts)
     return nil
   end
 
+  local start_line, start_col = target_node:start()
+
   ---@type Keysmith.NodeItem
   return {
     key = key,
     value = value,
     target_node = target_node,
+
+    buf = (opts or {}).bufnr or vim.api.nvim_get_current_buf(),
+    pos = { start_line + 1, start_col },
+    text = key,
+    valid = true,
   }
 end
 
