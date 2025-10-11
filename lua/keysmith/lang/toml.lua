@@ -8,6 +8,7 @@ local function clean_key(key) return key:gsub('^["\']', ''):gsub('["\']$', '') e
 M.get_all_leaf_keysmith_nodes = function(root, bufnr)
   ---@type table<boolean, Keysmith.NodeItem>
   local paths = {}
+  ---@type table<string, number>
   local arrayIndexCounter = {}
 
   ---@param node TSNode
@@ -18,7 +19,7 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
     local type = node:type()
     local prefixPrint = function(text) print(string.rep(' ', depth) .. text) end
 
-    prefixPrint('type ' .. type)
+    --prefixPrint('type ' .. type)
 
     ---@param curr_node TSNode
     local function extract_key_node(curr_node)
@@ -55,13 +56,16 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
       return full_key
     end
 
+    if type == 'comment' then
+      return
+    end
+
     -- Handle object properties
     if type == 'pair' then
       local key_node = extract_key_node(node)
-      print(key_node)
       if key_node then
         local key = extract_key_text(key_node)
-        prefixPrint('k: ' .. key)
+        --prefixPrint('k: ' .. key)
 
         local new_path
         if current_path == '' then
@@ -77,10 +81,10 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
 
         -- Traverse value node
         if value_node:type() == 'inline_table' then
-          prefixPrint('traversing ' .. new_path)
+          --prefixPrint('traversing ' .. new_path)
           traverse_node(value_node, new_path, key_node, depth + 1)
-          prefixPrint('=======2 ' .. type)
-          prefixPrint('p: ' .. new_path)
+          --prefixPrint('=======2 ' .. type)
+          --prefixPrint('p: ' .. new_path)
           return
         end
 
@@ -100,10 +104,9 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
     -- Handle array items
     elseif type == 'table_array_element' then
       local key_node = extract_key_node(node)
-      print(key_node)
       if key_node then
         local key = extract_key_text(key_node)
-        prefixPrint('k: ' .. key)
+        --prefixPrint('k: ' .. key)
 
         local new_path
         if current_path == '' then
@@ -113,6 +116,7 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
         end
 
         local index = arrayIndexCounter[new_path] or 0
+        --prefixPrint('a: ' .. index)
         arrayIndexCounter[new_path] = index + 1
 
         for child in node:iter_children() do
@@ -120,21 +124,20 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
             goto continue
           end
 
-          local array_path = current_path .. '[' .. index .. ']'
-          prefixPrint('traversing ' .. new_path)
+          local array_path = new_path .. '[' .. index .. ']'
+          --prefixPrint('traversing ' .. new_path)
           traverse_node(child, array_path, child, depth + 1)
-          prefixPrint('=======3 ' .. type)
-          prefixPrint('p: ' .. new_path)
+          --prefixPrint('=======3 ' .. type)
+          --prefixPrint('p: ' .. new_path)
           ::continue::
         end
       end
     -- Handle other stuff
     elseif type == 'table' then
       local key_node = extract_key_node(node)
-      print(key_node)
       if key_node then
         local key = extract_key_text(key_node)
-        prefixPrint('k: ' .. key)
+        --prefixPrint('k: ' .. key)
 
         local new_path
         if current_path == '' then
