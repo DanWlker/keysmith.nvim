@@ -3,15 +3,7 @@ local tools = require 'keysmith.tools'
 local M = {}
 
 ---@type Keysmith.Config
-M.opts = {
-  -- ft_parser = {
-  -- 	yaml = "yaml",
-  -- 	["yaml.helm-chartfile"] = "yaml",
-  -- 	json = "json",
-  -- 	kitty = "kitty",
-  -- 	toml = "toml",
-  -- },
-}
+M.opts = {}
 
 ---@param opts Keysmith.Config
 M.setup = function(opts)
