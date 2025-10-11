@@ -17,7 +17,9 @@ return {
 
 ## Usage
 
-1. Search all keys in the current file. Note: select_all_keys accept the same params as `vim.ui.select`, so you can override the `on_choice` or `opts` passed
+1. Search all keys in the current file.
+   - Select_all_keys accept the same params as `vim.ui.select`, so you can override the `on_choice` or `opts` passed
+   - If you use `snacks.nvim` with the `vim.ui.select` override, `trouble` and `quickfix` should work out of the box
 
 ```lua
 vim.api.nvim_create_autocmd('BufWinEnter', {
@@ -39,7 +41,13 @@ keys = {
     {
         'yv',
         function() vim.fn.setreg('+', require('keysmith').get_value()) end,
-        desc = 'Copy key under cursor',
+        desc = 'Copy value under cursor',
     },
 },
 ```
+
+## Credits
+
+[keytrail.nvim](https://github.com/JFryy/keytrail.nvim)
+
+[yaml.nvim](https://github.com/cuducos/yaml.nvim)
