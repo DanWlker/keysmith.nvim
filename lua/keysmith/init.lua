@@ -29,7 +29,7 @@ M.select_all_keys = function()
 
   -- TODO: Support quickfix list
   vim.ui.select(
-    tools.get_all_leaf_nodes(parser_name),
+    tools.get_all_leaf_nodes(parser_name) or {},
     {
       prompt = 'Keysmith',
       ---@param item Keysmith.NodeItem
@@ -56,7 +56,7 @@ M.get_all_leaf_keys = function()
   return vim.tbl_map(
     ---@param item Keysmith.NodeItem
     function(item) return item.key end,
-    tools.get_all_leaf_nodes(parser_name)
+    tools.get_all_leaf_nodes(parser_name) or {}
   )
 end
 
@@ -68,7 +68,12 @@ M.get_key = function()
     return ''
   end
 
-  return tools.get_node(parser_name).key
+  local node = tools.get_node(parser_name)
+  if not node then
+    return ''
+  end
+
+  return node.key
 end
 
 ---@return string

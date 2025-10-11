@@ -2,7 +2,6 @@
 local M = {}
 
 ---@param key string
----@return string
 local function clean_key(key) return key:gsub('^["\']', ''):gsub('["\']$', '') end
 
 -- TODO: check if want to support all possible combinations of keys and values, not just leaves
@@ -24,8 +23,6 @@ M.get_all_leaf_nodes = function()
   if not root then
     return nil
   end
-
-  ---@return string
 
   ---@type table<boolean, Keysmith.NodeItem>
   local paths = {}

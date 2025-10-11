@@ -15,11 +15,11 @@ M.error_treesitter = function(msg)
 end
 
 ---@param using_parser string
----@return Keysmith.NodeItem[]
+---@return Keysmith.NodeItem[] | nil
 M.get_all_leaf_nodes = function(using_parser) return require('keysmith.lang.' .. using_parser).get_all_leaf_nodes() end
 
 ---@param using_parser string
----@return Keysmith.NodeItem[]
+---@return Keysmith.NodeItem | nil
 M.get_node = function(using_parser) return require('keysmith.lang.' .. using_parser).get_node() end
 
 ---@return table<string, boolean>
