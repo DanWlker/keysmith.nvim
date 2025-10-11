@@ -22,10 +22,16 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
 
     -- Handle object properties
     if type == 'pair' then
-      local key_node = node:field('bare_key')[1]
+      local key_node = node:field('bare_key')[1] or node:field('quoted_key')[1]
       if key_node then
         local key = clean_key(vim.treesitter.get_node_text(key_node, 0))
-        local new_path = current_path .. '.' .. key
+
+        local new_path
+        if current_path == '' then
+          new_path = key
+        else
+          new_path = current_path .. '.' .. key
+        end
 
         local value_node = key_node:next_sibling()
         if not value_node then
@@ -56,38 +62,55 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
 
     -- Handle array items
     elseif type == 'table_array_element' then
-      local index = 0
-      for child in node:iter_children() do
-        local new_path = current_path .. '[' .. index .. ']'
-        index = index + 1
+      local key_node = node:field('bare_key')[1] or node:field('quoted_key')[1]
+      if key_node then
+        local key = clean_key(vim.treesitter.get_node_text(key_node, 0))
 
-        --prefixPrint('traversing ' .. new_path)
-        traverse_node(child, new_path, child, depth + 1)
-        --prefixPrint('=======3 ' .. type)
-        --prefixPrint('p: ' .. new_path)
+        local new_path
+        if current_path == '' then
+          new_path = key
+        else
+          new_path = current_path .. '.' .. key
+        end
+
+        local index = arrayIndexCounter[new_path] or 0
+        arrayIndexCounter[new_path] = index + 1
+
+        for child in node:iter_children() do
+          if child:equal(key_node) or child:type() == 'comment' then
+            goto continue
+          end
+
+          local array_path = current_path .. '[' .. index .. ']'
+          --prefixPrint('traversing ' .. new_path)
+          traverse_node(child, array_path, child, depth + 1)
+          --prefixPrint('=======3 ' .. type)
+          --prefixPrint('p: ' .. new_path)
+          ::continue::
+        end
       end
     -- Handle other stuff
-    else
-      -- leaf node
-      if node:child_count() == 0 then
-        local start_line, start_col = current_path_target_node:start()
-        paths[current_path] = {
-          key = current_path,
-          target_node = current_path_target_node,
+    elseif type == 'table' then
+      local key_node = node:field 'dotted_key'
+      if key_node then
+        local key = clean_key(vim.treesitter.get_node_text(key_node, 0))
 
-          buf = bufnr,
-          pos = { start_line + 1, start_col },
-          text = current_path,
-          valid = true,
-        }
-        return
-      end
+        local new_path
+        if current_path == '' then
+          new_path = key
+        else
+          new_path = current_path .. '.' .. key
+        end
 
-      for child in node:iter_children() do
-        --prefixPrint('traversing ' .. current_path)
-        traverse_node(child, current_path, current_path_target_node, depth + 1)
-        --prefixPrint('=======4 ' .. type)
-        --prefixPrint('p: ' .. current_path)
+        for child in node:iter_children() do
+          if child:equal(key_node) or child:type() == 'comment' then
+            goto continue
+          end
+
+          traverse_node(child, new_path, child, depth + 1)
+
+          ::continue::
+        end
       end
     end
   end
