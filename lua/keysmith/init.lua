@@ -95,6 +95,10 @@ M.can_parse = function()
     return '', false
   end
 
+  if not ts_parser:parse() then
+    return '', false
+  end
+
   local has_parser = pcall(require, 'keysmith.lang.' .. ts_parser:lang())
   if not has_parser then
     return '', false

@@ -98,17 +98,7 @@ M.get_all_leaf_nodes = function()
 end
 
 M.get_node = function()
-  local ft = vim.bo.filetype
-  local ok_parser, parser = pcall(vim.treesitter.get_parser, 0, ft)
-  if not ok_parser or not parser then
-    return nil
-  end
-
-  local trees = parser:parse()
-  if not trees or not trees[1] then
-    return nil
-  end
-
+  vim.treesitter.get_parser():parse()
   local node = vim.treesitter.get_node(nil)
   if not node then
     return nil
@@ -147,6 +137,10 @@ M.get_node = function()
     elseif type == 'block_sequence' or type == 'flow_sequence' then
       local counter = 1
       for child in node:iter_children() do
+        if child:equal(last_key_node) then
+          break
+        end
+
         local desc = child:child_with_descendant(last_key_node)
         if desc then
           break
