@@ -73,31 +73,40 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
           new_path = current_path .. '.' .. key
         end
 
-        local value_node = key_node:next_sibling()
-        if not value_node then
-          return
+        for child in node:iter_children() do
+          if child == key_node then
+            goto continue
+          end
+
+          -- Traverse value node
+          if child:type() == 'inline_table' then
+            --prefixPrint('traversing ' .. new_path)
+            traverse_node(child, new_path, depth + 1)
+            --prefixPrint('=======2 ' .. type)
+            --prefixPrint('p: ' .. new_path)
+            goto continue
+          end
+
+          if vim.treesitter.get_node_text(child, 0) == '=' then
+            goto continue
+          end
+
+          -- if the type of the value node is not a table, then it can only be the leaf
+          local start_line, start_col = key_node:start()
+          paths[new_path] = {
+            key = new_path,
+            value = vim.treesitter.get_node_text(child, 0),
+            target_node = key_node,
+
+            buf = bufnr,
+            pos = { start_line + 1, start_col },
+            text = new_path,
+            valid = true,
+          }
+
+          ::continue::
         end
 
-        -- Traverse value node
-        if value_node:type() == 'inline_table' then
-          --prefixPrint('traversing ' .. new_path)
-          traverse_node(value_node, new_path, depth + 1)
-          --prefixPrint('=======2 ' .. type)
-          --prefixPrint('p: ' .. new_path)
-          return
-        end
-
-        -- if the type of the value node is not a table, then it can only be the leaf
-        local start_line, start_col = key_node:start()
-        paths[new_path] = {
-          key = new_path,
-          target_node = key_node,
-
-          buf = bufnr,
-          pos = { start_line + 1, start_col },
-          text = new_path,
-          valid = true,
-        }
         return
       end
 
@@ -205,20 +214,29 @@ M.get_keysmith_node = function(opts)
     return nil
   end
 
-  table.sort(all_nodes, function(a, b) return a.pos[1] < b.pos[1] end)
-
-  local cursor_line = (opts.pos or {})[1] or vim.api.nvim_win_get_cursor(0)[1]
-  local previous_node = nil
-  for _, node in pairs(all_nodes) do
-    local node_line, _ = node.target_node:start()
-    node_line = node_line + 1
-
-    if cursor_line == node_line then
-      return node
+  table.sort(all_nodes, function(a, b)
+    if a.pos[1] == b.pos[1] then
+      return a.pos[2] < b.pos[2]
     end
 
-    if cursor_line < node_line then
+    return a.pos[1] < b.pos[1]
+  end)
+
+  local cursor_pos = (opts.pos or {})[1] or vim.api.nvim_win_get_cursor(0)
+  local previous_node = nil
+  for _, node in pairs(all_nodes) do
+    local node_line, node_col = node.target_node:start()
+    node_line = node_line + 1
+
+    if cursor_pos[2] < node_line then
       return previous_node
+    end
+
+    if cursor_pos[1] == node_line then
+      if cursor_pos < node_col then
+        return previous_node
+      end
+      return node
     end
 
     previous_node = node

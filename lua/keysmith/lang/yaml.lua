@@ -11,9 +11,9 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
 
   ---@param node TSNode
   ---@param current_path string
-  ---@param current_path_target_node TSNode
+  ---@param current_path_key_node TSNode
   ---@param depth number
-  local function traverse_node(node, current_path, current_path_target_node, depth)
+  local function traverse_node(node, current_path, current_path_key_node, current_path_value_node, depth)
     local type = node:type()
     --local prefixPrint = function(text) print(string.rep(' ', depth) .. text) end
 
@@ -30,7 +30,7 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
         local value_node = node:field('value')[1]
         if value_node then
           --prefixPrint('traversing ' .. new_path)
-          traverse_node(value_node, new_path, key_node, depth + 1)
+          traverse_node(value_node, new_path, key_node, current_path_value_node, depth + 1)
           --prefixPrint('=======2 ' .. type)
           --prefixPrint('p: ' .. new_path)
           return
@@ -44,7 +44,7 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
         index = index + 1
 
         --prefixPrint('traversing ' .. new_path)
-        traverse_node(child, new_path, child, depth + 1)
+        traverse_node(child, new_path, child, current_path_value_node, depth + 1)
         --prefixPrint('=======3 ' .. type)
         --prefixPrint('p: ' .. new_path)
       end
@@ -52,10 +52,11 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
     else
       -- leaf node
       if node:child_count() == 0 then
-        local start_line, start_col = current_path_target_node:start()
+        local start_line, start_col = current_path_key_node:start()
         paths[current_path] = {
           key = current_path,
-          target_node = current_path_target_node,
+          value = vim.treesitter.get_node_text(current_path_value_node, 0),
+          target_node = current_path_key_node,
 
           buf = bufnr,
           pos = { start_line + 1, start_col },
@@ -67,14 +68,14 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
 
       for child in node:iter_children() do
         --prefixPrint('traversing ' .. current_path)
-        traverse_node(child, current_path, current_path_target_node, depth + 1)
+        traverse_node(child, current_path, current_path_key_node, current_path_value_node, depth + 1)
         --prefixPrint('=======4 ' .. type)
         --prefixPrint('p: ' .. current_path)
       end
     end
   end
 
-  traverse_node(root, '', root, 0)
+  traverse_node(root, '', root, root, 0)
 
   ---@type Keysmith.NodeItem[]
   local res = {}
