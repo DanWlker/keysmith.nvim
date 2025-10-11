@@ -1,0 +1,180 @@
+---@type Keysmith.lang
+local M = {}
+
+---@param key string
+local function clean_key(key) return key:gsub('^["\']', ''):gsub('["\']$', '') end
+
+-- TODO: check if want to support all possible combinations of keys and values, not just leaves
+M.get_all_leaf_keysmith_nodes = function(root, bufnr)
+  ---@type table<boolean, Keysmith.NodeItem>
+  local paths = {}
+
+  ---@param node TSNode
+  ---@param current_path string
+  ---@param current_path_target_node TSNode
+  ---@param depth number
+  local function traverse_node(node, current_path, current_path_target_node, depth)
+    local type = node:type()
+    local prefixPrint = function(text) print(string.rep(' ', depth) .. text) end
+
+    --prefixPrint('type ' .. type)
+    --prefixPrint('current_path_target_node ' ..vim.treesitter.get_node_text(current_path_target_node, bufnr) )
+
+    -- Handle object properties
+    if type == 'pair' then
+      local key_node = node:field('key')[1]
+      if key_node then
+        local key = clean_key(vim.treesitter.get_node_text(key_node, 0))
+        local new_path = current_path .. '.' .. key
+
+        -- Traverse value node
+        local value_node = node:field('value')[1]
+        if value_node then
+          --prefixPrint('traversing ' .. new_path)
+          traverse_node(value_node, new_path, key_node, depth + 1)
+          --prefixPrint('=======2 ' .. type)
+          --prefixPrint('p: ' .. new_path)
+          return
+        end
+      end
+    -- Handle array items
+    elseif type == 'array' then
+      local index = 0
+      for child in node:iter_children() do
+        if child:type() ~= 'object' then
+          goto continue
+        end
+
+        local new_path = current_path .. '[' .. index .. ']'
+        index = index + 1
+
+        --prefixPrint('traversing ' .. new_path)
+        traverse_node(child, new_path, child, depth + 1)
+        --prefixPrint('=======3 ' .. type)
+        --prefixPrint('p: ' .. new_path)
+          ::continue::
+      end
+    -- Handle other stuff
+    else
+      -- leaf node
+      if node:child_count() == 0 then
+        local start_line, start_col = current_path_target_node:start()
+        paths[current_path] = {
+          key = current_path,
+          target_node = current_path_target_node,
+
+          buf = bufnr,
+          pos = { start_line + 1, start_col },
+          text = current_path,
+          valid = true,
+        }
+        return
+      end
+
+      for child in node:iter_children() do
+        --prefixPrint('traversing ' .. current_path)
+        traverse_node(child, current_path, current_path_target_node, depth + 1)
+        --prefixPrint('=======4 ' .. type)
+        --prefixPrint('p: ' .. current_path)
+      end
+    end
+  end
+
+  traverse_node(root, '', root, 0)
+
+  ---@type Keysmith.NodeItem[]
+  local res = {}
+  for _, value in pairs(paths) do
+    table.insert(res, value)
+  end
+
+  return res
+end
+
+M.get_keysmith_node = function(opts)
+  vim.treesitter.get_parser():parse()
+  local node = vim.treesitter.get_node(opts)
+  if not node then
+    return nil
+  end
+
+  local key, value, target_node = nil, nil, nil
+  local last_key_node = node
+  while node do
+    local type = node:type()
+
+    if type == 'pair' then
+      local key_node = node:field('key')[1]
+      if key_node then
+        local node_text = clean_key(vim.treesitter.get_node_text(key_node, 0))
+        if key == nil then
+          key = node_text
+        elseif string.sub(key, 1, 1) == '[' then
+          key = node_text .. (key or '')
+        else
+          key = node_text .. '.' .. (key or '')
+        end
+
+        if not value then
+          local value_node = node:field('value')[1]
+          if value_node then
+            value = clean_key(vim.treesitter.get_node_text(value_node, 0))
+          end
+        end
+
+        if not target_node then
+          target_node = node
+        end
+
+        last_key_node = node
+      end
+    elseif type == 'array' then
+      local counter = 1
+      for child in node:iter_children() do
+        if child:equal(last_key_node) then
+          break
+        end
+
+        if child:type() ~= 'object' then
+          goto continue
+        end
+
+        local desc = child:child_with_descendant(last_key_node)
+        if desc then
+          break
+        end
+        counter = counter + 1
+          ::continue::
+      end
+
+      local node_text = '[' .. counter .. ']'
+      if key == nil then
+        key = node_text
+      else
+        key = node_text .. '.' .. (key or '')
+      end
+    end
+
+    node = node:parent()
+  end
+
+  if not target_node or not key or not value then
+    return nil
+  end
+
+  local start_line, start_col = target_node:start()
+
+  ---@type Keysmith.NodeItem
+  return {
+    key = key,
+    value = value,
+    target_node = target_node,
+
+    buf = (opts or {}).bufnr or vim.api.nvim_get_current_buf(),
+    pos = { start_line + 1, start_col },
+    text = key,
+    valid = true,
+  }
+end
+
+return M

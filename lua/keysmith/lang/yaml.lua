@@ -44,7 +44,7 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
         index = index + 1
 
         --prefixPrint('traversing ' .. new_path)
-        traverse_node(child, new_path, current_path_target_node, depth + 1)
+        traverse_node(child, new_path, child, depth + 1)
         --prefixPrint('=======3 ' .. type)
         --prefixPrint('p: ' .. new_path)
       end
