@@ -198,6 +198,11 @@ M.get_keysmith_node = function(opts)
     return nil
   end
 
+  local curr_node = vim.treesitter.get_node(opts)
+  if not curr_node then
+    return nil
+  end
+
   local trees = parser:parse()
   if not trees or not trees[1] then
     return nil
@@ -223,24 +228,29 @@ M.get_keysmith_node = function(opts)
   end)
 
   local cursor_pos = (opts.pos or {})[1] or vim.api.nvim_win_get_cursor(0)
-  local previous_node = nil
+  local selected_node = nil
   for _, node in pairs(all_nodes) do
     local node_line, node_col = node.target_node:start()
     node_line = node_line + 1
 
-    if cursor_pos[2] < node_line then
-      return previous_node
+    if cursor_pos[1] > node_line then
+      goto continue
     end
 
-    if cursor_pos[1] == node_line then
-      if cursor_pos < node_col then
-        return previous_node
-      end
-      return node
+    if cursor_pos[2] > node_col then
+      goto continue
     end
 
-    previous_node = node
+    selected_node = node
+    if selected_node ~= nil then
+      break
+    end
+
+    ::continue::
   end
+
+  -- TODO: There's a bug here where we can't get the whole value of a non leaf target because of how the thing is set up
+  return selected_node
 end
 
 return M
