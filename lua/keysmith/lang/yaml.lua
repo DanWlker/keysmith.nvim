@@ -137,11 +137,11 @@ M.get_keysmith_node = function(opts)
         counter = counter + 1
       end
 
-      local node_text = '[' .. counter .. ']'
+      local key_node_text = '[' .. counter .. ']'
       if key == nil then
-        key = node_text
+        key = key_node_text
       else
-        key = node_text .. '.' .. (key or '')
+        key = key_node_text .. '.' .. (key or '')
       end
     end
 

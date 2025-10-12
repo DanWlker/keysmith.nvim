@@ -188,8 +188,7 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
   return res
 end
 
--- TODO: I don't like this implementation, must find a more efficient way to do it
--- The arrays are a headache though
+-- TODO: Figure out how to get the index of arrays
 M.get_keysmith_node = function(opts)
   vim.treesitter.get_parser():parse()
   local node = vim.treesitter.get_node(opts)
@@ -208,8 +207,6 @@ M.get_keysmith_node = function(opts)
 
         if key == nil then
           key = key_node_text
-        elseif string.sub(key, 1, 1) == '[' then
-          key = key_node_text .. key
         else
           key = key_node_text .. '.' .. key
         end

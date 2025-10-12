@@ -107,13 +107,13 @@ M.get_keysmith_node = function(opts)
     if type == 'pair' then
       local key_node = node:field('key')[1]
       if key_node then
-        local node_text = clean_key(vim.treesitter.get_node_text(key_node, 0))
+        local key_node_text = clean_key(vim.treesitter.get_node_text(key_node, 0))
         if key == nil then
-          key = node_text
+          key = key_node_text
         elseif string.sub(key, 1, 1) == '[' then
-          key = node_text .. (key or '')
+          key = key_node_text .. (key or '')
         else
-          key = node_text .. '.' .. (key or '')
+          key = key_node_text .. '.' .. (key or '')
         end
 
         if not value then
@@ -148,11 +148,11 @@ M.get_keysmith_node = function(opts)
           ::continue::
       end
 
-      local node_text = '[' .. counter .. ']'
+      local key_node_text = '[' .. counter .. ']'
       if key == nil then
-        key = node_text
+        key = key_node_text
       else
-        key = node_text .. '.' .. (key or '')
+        key = key_node_text .. '.' .. (key or '')
       end
     end
 
