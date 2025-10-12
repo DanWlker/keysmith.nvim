@@ -20,9 +20,7 @@ M.get_all_leaf_keysmith_nodes = function(using_parser)
   for _, child in ipairs(trees) do
     local root = child:root()
     table.insert(roots, root)
-    print(root:type())
   end
-  print '======shit'
 
   return require('keysmith.lang.' .. using_parser).get_all_leaf_keysmith_nodes(roots, vim.api.nvim_get_current_buf())
 end
