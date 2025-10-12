@@ -58,6 +58,11 @@ M.get_all_leaf_nodes_single = function(root, bufnr, prefix)
       local index = 0
       for child in node:iter_children() do
         local new_path = current_path .. '[' .. index .. ']'
+
+        if type == 'stream' and node:child_count() == 1 then
+          new_path = current_path
+        end
+
         index = index + 1
 
         --prefixPrint('traversing ' .. new_path)
