@@ -54,7 +54,7 @@ M.get_all_leaf_nodes_single = function(root, bufnr, prefix)
         end
       end
     -- Handle array items
-    elseif type == 'block_sequence' or type == 'flow_sequence' then
+    elseif type == 'block_sequence' or type == 'flow_sequence' or type == 'stream' then
       local index = 0
       for child in node:iter_children() do
         local new_path = current_path .. '[' .. index .. ']'
