@@ -47,6 +47,12 @@ return {
     },
     ```
 
+## Currently supports (more to come and refine)
+- yaml
+- json
+- toml
+- helm
+
 ## Credits
 
 [keytrail.nvim](https://github.com/JFryy/keytrail.nvim)
