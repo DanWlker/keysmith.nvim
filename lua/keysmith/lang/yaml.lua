@@ -32,9 +32,9 @@ M.get_all_leaf_nodes_single = function(root, bufnr, prefix)
   ---@param depth number
   local function traverse_node(node, current_path, current_path_key_node, current_path_value_node, depth)
     local type = node:type()
-    --local prefixPrint = function(text) print(string.rep(' ', depth) .. text) end
+    local prefixPrint = function(text) print(string.rep(' ', depth) .. text) end
 
-    --prefixPrint('type ' .. type)
+    prefixPrint('type ' .. type)
 
     -- Handle object properties
     if type == 'block_mapping_pair' or type == 'flow_pair' then
@@ -46,29 +46,38 @@ M.get_all_leaf_nodes_single = function(root, bufnr, prefix)
         -- Traverse value node
         local value_node = node:field('value')[1]
         if value_node then
-          --prefixPrint('traversing ' .. new_path)
+          prefixPrint('traversing ' .. new_path)
           traverse_node(value_node, new_path, key_node, current_path_value_node, depth + 1)
-          --prefixPrint('=======2 ' .. type)
-          --prefixPrint('p: ' .. new_path)
+          prefixPrint('=======2 ' .. type)
+          prefixPrint('p: ' .. new_path)
           return
         end
       end
     -- Handle array items
     elseif type == 'block_sequence' or type == 'flow_sequence' or type == 'stream' then
-      local index = 0
+      ---@type TSNode
+      local valid_children = {}
       for child in node:iter_children() do
+        if child:type() == 'comment' then
+          goto continue
+        end
+
+        table.insert(valid_children, child)
+
+        ::continue::
+      end
+
+      for index, child in ipairs(valid_children) do
         local new_path = current_path .. '[' .. index .. ']'
 
-        if type == 'stream' and node:child_count() == 1 then
+        if type == 'stream' and #valid_children == 1 then
           new_path = current_path
         end
 
-        index = index + 1
-
-        --prefixPrint('traversing ' .. new_path)
+        prefixPrint('traversing ' .. new_path)
         traverse_node(child, new_path, child, current_path_value_node, depth + 1)
-        --prefixPrint('=======3 ' .. type)
-        --prefixPrint('p: ' .. new_path)
+        prefixPrint('=======3 ' .. type)
+        prefixPrint('p: ' .. new_path)
       end
     -- Handle other stuff
     else
@@ -87,10 +96,10 @@ M.get_all_leaf_nodes_single = function(root, bufnr, prefix)
       end
 
       for child in node:iter_children() do
-        --prefixPrint('traversing ' .. current_path)
+        prefixPrint('traversing ' .. current_path)
         traverse_node(child, current_path, current_path_key_node, current_path_value_node, depth + 1)
-        --prefixPrint('=======4 ' .. type)
-        --prefixPrint('p: ' .. current_path)
+        prefixPrint('=======4 ' .. type)
+        prefixPrint('p: ' .. current_path)
       end
     end
   end
