@@ -191,66 +191,118 @@ end
 -- TODO: I don't like this implementation, must find a more efficient way to do it
 -- The arrays are a headache though
 M.get_keysmith_node = function(opts)
-  opts = opts or {}
-
-  local ok_parser, parser = pcall(vim.treesitter.get_parser, opts.bufnr)
-  if not ok_parser or not parser then
+  vim.treesitter.get_parser():parse()
+  local node = vim.treesitter.get_node(opts)
+  if not node then
     return nil
   end
 
-  local curr_node = vim.treesitter.get_node(opts)
-  if not curr_node then
-    return nil
-  end
+  local key, value, target_node = nil, nil, nil
+  while node do
+    local type = node:type()
 
-  local trees = parser:parse()
-  if not trees or not trees[1] then
-    return nil
-  end
+    if type == 'pair' then
+      local key_node = extract_key_node(node)
+      if key_node then
+        local key_node_text = extract_key_text(key_node)
 
-  local tree = trees[1]
-  local root = tree:root()
-  if not root then
-    return nil
-  end
+        if key == nil then
+          key = key_node_text
+        elseif string.sub(key, 1, 1) == '[' then
+          key = key_node_text .. key
+        else
+          key = key_node_text .. '.' .. key
+        end
 
-  local all_nodes = M.get_all_leaf_keysmith_nodes(root, opts.bufnr)
-  if not all_nodes or #all_nodes == 0 then
-    return nil
-  end
+        if not target_node then
+          target_node = node
+        end
 
-  table.sort(all_nodes, function(a, b)
-    if a.pos[1] == b.pos[1] then
-      return a.pos[2] < b.pos[2]
-    end
+        if value then
+          goto continue
+        end
 
-    return a.pos[1] < b.pos[1]
-  end)
+        for child in node:iter_children() do
+          if child == key_node then
+            goto continue
+          end
 
-  local cursor_pos = (opts.pos or {})[1] or vim.api.nvim_win_get_cursor(0)
-  local selected_node = nil
-  for _, node in pairs(all_nodes) do
-    local node_line, node_col = node.target_node:start()
-    node_line = node_line + 1
+          if vim.treesitter.get_node_text(child, 0) == '=' then
+            goto continue
+          end
 
-    if cursor_pos[1] > node_line then
-      goto continue
-    end
+          value = clean_key(vim.treesitter.get_node_text(child, 0))
 
-    if cursor_pos[2] > node_col then
-      goto continue
-    end
+          ::continue::
+        end
+      end
 
-    selected_node = node
-    if selected_node ~= nil then
-      break
+    elseif type == 'table_array_element'  then
+      local key_node = extract_key_node(node)
+      if key_node then
+        local key_node_text = extract_key_text(key_node)
+
+        if key == nil then
+          key = key_node_text .. '[?]'
+        else
+          key = key_node_text .. '[?].' .. key
+        end
+
+        if not target_node then
+          target_node = node
+        end
+
+        if value then
+          goto continue
+        end
+
+        value = clean_key(vim.treesitter.get_node_text(node, 0))
+      end
+
+    elseif type == 'table' then
+      local key_node = extract_key_node(node)
+      if key_node then
+        local key_node_text = extract_key_text(key_node)
+
+        if key == nil then
+          key = key_node_text
+        else
+          key = key_node_text .. '.' .. key
+        end
+
+        if not target_node then
+          target_node = node
+        end
+
+        if value then
+          goto continue
+        end
+
+        value = clean_key(vim.treesitter.get_node_text(node, 0))
+      end
     end
 
     ::continue::
+    node = node:parent()
   end
 
-  -- TODO: There's a bug here where we can't get the whole value of a non leaf target because of how the thing is set up
-  return selected_node
+  if not target_node or not key or not value then
+    return nil
+  end
+
+  local start_line, start_col = target_node:start()
+
+  ---@type Keysmith.NodeItem
+  return {
+    key = key,
+    value = value,
+    target_node = target_node,
+
+    buf = (opts or {}).bufnr or vim.api.nvim_get_current_buf(),
+    pos = { start_line + 1, start_col },
+    text = key,
+    valid = true,
+  }
 end
 
 return M
