@@ -1,4 +1,4 @@
-local tools = require "keysmith.tools"
+local tools = require 'keysmith.tools'
 ---@type Keysmith.lang
 local M = {}
 
@@ -10,10 +10,17 @@ M.get_all_leaf_keysmith_nodes = function(roots, bufnr)
   ---@type Keysmith.NodeItem[]
   local res = {}
   for i, root in ipairs(roots) do
-    vim.tbl_extend('error', res, M.get_all_leaf_nodes_single(root, bufnr, tostring(i)))
+    vim.tbl_extend('error', res, M.get_all_leaf_nodes_single(root, bufnr, '[' .. i .. '].'))
   end
 
   return res
+end
+
+---@param node TSNode
+---@return boolean
+local function isPunctuation(node)
+  local type = node:type()
+  return type == '{' or type == ',' or type == '}' or type == '"' or type == '[' or type == ']'
 end
 
 ---@param key string
@@ -32,10 +39,10 @@ M.get_all_leaf_nodes_single = function(root, bufnr, prefix)
   ---@param depth number
   local function traverse_node(node, current_path, current_path_key_node, current_path_value_node, depth)
     local type = node:type()
-    -- local prefixPrint = function(text) print(string.rep(' ', depth) .. text) end
+    --local prefixPrint = function(text) print(string.rep(' ', depth) .. text) end
 
     --prefixPrint('type ' .. type)
-    --prefixPrint('current_path_target_node ' ..vim.treesitter.get_node_text(current_path_target_node, bufnr) )
+    --prefixPrint('current_path_key_node ' ..vim.treesitter.get_node_text(current_path_key_node, bufnr) )
 
     -- Handle object properties
     if type == 'pair' then
@@ -56,38 +63,37 @@ M.get_all_leaf_nodes_single = function(root, bufnr, prefix)
       end
     -- Handle array items
     elseif type == 'array' then
-      local index = 0
+      local valid_children = {}
       for child in node:iter_children() do
-        if child:type() ~= 'object' then
+        if isPunctuation(child) then
           goto continue
         end
-
-        local new_path = current_path .. '[' .. index .. ']'
-        index = index + 1
+        table.insert(valid_children, child)
+        ::continue::
+      end
+      for index, child in ipairs(valid_children) do
+        local new_path = current_path .. '[' .. index - 1 .. ']'
 
         --prefixPrint('traversing ' .. new_path)
         traverse_node(child, new_path, child, current_path_value_node, depth + 1)
         --prefixPrint('=======3 ' .. type)
         --prefixPrint('p: ' .. new_path)
-          ::continue::
       end
     -- Handle other stuff
     else
       -- leaf node
+      --prefixPrint 'checking is leaf'
       if node:child_count() == 0 then
+        --prefixPrint 'is leaf'
         local start_line, start_col = current_path_key_node:start()
-        paths[current_path] = tools.new_keysmith_node_item(
-           prefix .. current_path,
-           vim.treesitter.get_node_text(current_path_value_node, 0),
-           current_path_key_node,
-          {
+        paths[current_path] =
+          tools.new_keysmith_node_item(prefix .. current_path, vim.treesitter.get_node_text(current_path_value_node, 0), current_path_key_node, {
             bufnr = bufnr,
-            lnum = start_line+1,
+            lnum = start_line + 1,
             start_col = start_col,
             text = prefix .. current_path,
             valid = true,
-          }
-        )
+          })
         return
       end
 
@@ -100,7 +106,7 @@ M.get_all_leaf_nodes_single = function(root, bufnr, prefix)
     end
   end
 
-  traverse_node(root, '', root,root, 0)
+  traverse_node(root, '', root, root, 0)
 
   ---@type Keysmith.NodeItem[]
   local res = {}
@@ -149,22 +155,26 @@ M.get_keysmith_node = function(opts)
         last_key_node = node
       end
     elseif type == 'array' then
-      local counter = 0
+      local valid_children = {}
       for child in node:iter_children() do
+        if isPunctuation(child) then
+          goto continue
+        end
+        table.insert(valid_children, child)
+        ::continue::
+      end
+
+      local counter = 0
+      for index, child in ipairs(valid_children) do
         if child:equal(last_key_node) then
           break
-        end
-
-        if child:type() ~= 'object' then
-          goto continue
         end
 
         local desc = child:child_with_descendant(last_key_node)
         if desc then
           break
         end
-        counter = counter + 1
-          ::continue::
+        counter = index - 1
       end
 
       local key_node_text = '[' .. counter .. ']'
@@ -185,18 +195,13 @@ M.get_keysmith_node = function(opts)
   local start_line, start_col = target_node:start()
 
   ---@type Keysmith.NodeItem
-  return tools.new_keysmith_node_item(
-    key,
-    value,
-    target_node,
-    {
-      buf = (opts or {}).bufnr or vim.api.nvim_get_current_buf(),
-      lnum = start_line+1,
-      col = start_col,
-      text = key,
-      valid = true,
-    }
-  )
+  return tools.new_keysmith_node_item(key, value, target_node, {
+    buf = (opts or {}).bufnr or vim.api.nvim_get_current_buf(),
+    lnum = start_line + 1,
+    col = start_col,
+    text = key,
+    valid = true,
+  })
 end
 
 return M
