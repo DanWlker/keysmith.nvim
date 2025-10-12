@@ -3,7 +3,9 @@ local M = {}
 ---@param using_parser string
 ---@return Keysmith.NodeItem[] | nil
 M.get_all_leaf_keysmith_nodes = function(using_parser)
-  local ok_parser, parser = pcall(vim.treesitter.get_parser, 0)
+  ---@type string
+  local use_lang = require('keysmith.lang.' .. using_parser).use_lang
+  local ok_parser, parser = pcall(vim.treesitter.get_parser, 0, use_lang)
   if not ok_parser or not parser then
     return nil
   end
