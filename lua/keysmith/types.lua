@@ -8,10 +8,16 @@
 ---@field text string
 ---
 ---Telescope
---- TODO: fill this
+---@field bufnr number
+---@field lnum number
+---@field col number
+---@field text string
 ---
 ---Fzf lua
---- TODO: fill this
+---@field bufnr number
+---@field line number
+---@field col number
+---@field text string
 
 ---@class Keysmith.NodeItem: QuickfixEntryHelper
 ---@field key string

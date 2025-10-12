@@ -1,3 +1,4 @@
+local tools = require "keysmith.tools"
 ---@type Keysmith.lang
 local M = {}
 
@@ -93,16 +94,17 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
 
           -- if the type of the value node is not a table, then it can only be the leaf
           local start_line, start_col = key_node:start()
-          paths[new_path] = {
-            key = new_path,
-            value = vim.treesitter.get_node_text(child, 0),
-            target_node = key_node,
-
-            buf = bufnr,
-            pos = { start_line + 1, start_col },
-            text = new_path,
-            valid = true,
-          }
+          paths[new_path] = tools.new_keysmith_node_item(
+            new_path,
+            vim.treesitter.get_node_text(child, 0),
+            key_node,
+            {
+              bufnr = bufnr,
+              lnum = start_line+1,
+              col = start_col,
+              valid = true,
+            }
+          )
 
           ::continue::
         end
@@ -289,17 +291,19 @@ M.get_keysmith_node = function(opts)
 
   local start_line, start_col = target_node:start()
 
-  ---@type Keysmith.NodeItem
-  return {
-    key = key,
-    value = value,
-    target_node = target_node,
-
-    buf = (opts or {}).bufnr or vim.api.nvim_get_current_buf(),
-    pos = { start_line + 1, start_col },
+  return tools.new_keysmith_node_item(
+    key,
+    value,
+    target_node,
+    {
+    bufnr = (opts or {}).bufnr or vim.api.nvim_get_current_buf(),
+      lnum = start_line+1,
+      col = start_col,
     text = key,
     valid = true,
-  }
+    }
+  )
+
 end
 
 return M

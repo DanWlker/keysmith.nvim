@@ -26,4 +26,35 @@ end
 ---@return Keysmith.NodeItem | nil
 M.get_keysmith_node = function(using_parser) return require('keysmith.lang.' .. using_parser).get_keysmith_node() end
 
+---@param key string
+---@param value string
+---@param target_node TSNode
+---@param qf_params vim.quickfix.entry
+---@return Keysmith.NodeItem
+M.new_keysmith_node_item = function(key, value, target_node, qf_params)
+  return {
+    key = key,
+    value = value,
+    target_node = target_node,
+
+    --Snacks
+    buf = qf_params.bufnr,
+    pos = { qf_params.lnum, qf_params.col },
+    valid = qf_params.valid,
+    text = qf_params.text,
+
+    --Telescope
+    bufnr = qf_params.bufnr,
+    lnum = qf_params.lnum,
+    col = qf_params.col,
+    text = qf_params.text,
+
+    --Fzf lua
+    bufnr = qf_params.bufnr,
+    line = qf_params.line,
+    col = qf_params.col,
+    text = qf_params.text,
+  }
+end
+
 return M
