@@ -2,6 +2,20 @@ local tools = require "keysmith.tools"
 ---@type Keysmith.lang
 local M = {}
 
+M.get_all_leaf_keysmith_nodes = function(roots, bufnr)
+  if #roots == 1 then
+    return M.get_all_leaf_nodes_single(roots[1], bufnr)
+  end
+
+  ---@type Keysmith.NodeItem[]
+  local res = {}
+  for i, root in ipairs(roots) do
+    vim.tbl_extend('error', res, M.get_all_leaf_nodes_single(root, bufnr, '[' .. i .. '].'))
+  end
+
+  return res
+end
+
 ---@param key string
 local function clean_key(key) return key:gsub('^["\']', ''):gsub('["\']$', '') end
 
@@ -41,7 +55,9 @@ local function extract_key_text(key_node)
 end
 
 -- TODO: check if want to support all possible combinations of keys and values, not just leaves
-M.get_all_leaf_keysmith_nodes = function(root, bufnr)
+M.get_all_leaf_nodes_single = function(root, bufnr, prefix)
+  prefix = prefix or ''
+
   ---@type table<boolean, Keysmith.NodeItem>
   local paths = {}
   ---@type table<string, number>
@@ -95,7 +111,7 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
           -- if the type of the value node is not a table, then it can only be the leaf
           local start_line, start_col = key_node:start()
           paths[new_path] = tools.new_keysmith_node_item(
-            new_path,
+            prefix .. new_path,
             vim.treesitter.get_node_text(child, 0),
             key_node,
             {
@@ -103,6 +119,7 @@ M.get_all_leaf_keysmith_nodes = function(root, bufnr)
               lnum = start_line+1,
               col = start_col,
               valid = true,
+              text = prefix .. new_path,
             }
           )
 
@@ -297,8 +314,8 @@ M.get_keysmith_node = function(opts)
     target_node,
     {
     bufnr = (opts or {}).bufnr or vim.api.nvim_get_current_buf(),
-      lnum = start_line+1,
-      col = start_col,
+    lnum = start_line+1,
+    col = start_col,
     text = key,
     valid = true,
     }

@@ -13,13 +13,16 @@ M.get_all_leaf_keysmith_nodes = function(using_parser)
     return nil
   end
 
-  local tree = trees[1]
-  local root = tree:root()
-  if not root then
-    return nil
+  ---@type Keysmith.NodeItem[]
+  local roots = {}
+  for _, child in ipairs(trees) do
+    local root = child:root()
+    table.insert(roots, root)
+    print(root:type())
   end
+  print '====='
 
-  return require('keysmith.lang.' .. using_parser).get_all_leaf_keysmith_nodes(root, vim.api.nvim_get_current_buf())
+  return require('keysmith.lang.' .. using_parser).get_all_leaf_keysmith_nodes(roots, vim.api.nvim_get_current_buf())
 end
 
 ---@param using_parser string
