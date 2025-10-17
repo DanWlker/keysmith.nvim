@@ -1,8 +1,15 @@
+## Archived
+
+Use lsp_symbols instead:
+
+- https://github.com/folke/snacks.nvim/pull/2266
+
 # keysmith.nvim
 
 A neovim helper for data/config languages like Json, Yaml, Toml etc.
 
 https://github.com/user-attachments/assets/9e4d011c-50b3-45b8-b261-9befeb84d155
+
 
 ## Installation
 
